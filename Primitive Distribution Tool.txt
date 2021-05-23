@@ -1,0 +1,278 @@
+import maya.cmds as cmds
+import math
+    
+def Distrib_Tool_UI():
+    myWin = cmds.window(title= 'Primitive Distribution Tool')
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 50))
+    #x axis menu *** separated from menus with prefix "XA_"
+    cmds.columnLayout(columnAlign= "center")
+    cmds.frameLayout(label= 'Distribute in X Axis', borderVisible= True)
+    cmds.rowColumnLayout(numberOfColumns= 2)
+    cmds.text('Number of Primitives')
+    cmds.intSliderGrp("XA_numsObjects", field= True, minValue= 1, value= 1)
+    cmds.text('Distance Between')
+    cmds.floatSliderGrp("XA_distance", field= True, minValue= 1, value= 2)
+    cmds.setParent('..')
+    cmds.radioButtonGrp("XA_which", numberOfRadioButtons= 4, label= 'Type of Primitive', labelArray4= ['Sphere', 'Cube', 'Cylinder', 'Cone'], select= 1)  
+    cmds.checkBox("XA_negative", label='Make It Negative', value= False)
+    
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 100))
+    cmds.button(label = "Distribute", width = 300, command = 'create_LineX()')    
+    #y axis menu  *** separated from menus with prefix "YA_"
+    cmds.setParent('..')
+    cmds.setParent('..')
+    cmds.frameLayout(label= 'Distribute in Y Axis', borderVisible= True)
+    cmds.rowColumnLayout(numberOfColumns= 2)
+    cmds.text('Number of Primitives')
+    cmds.intSliderGrp("YA_numsObjects", field= True, minValue= 1, value= 1)
+    cmds.text('Distance Between')
+    cmds.floatSliderGrp("YA_distance", field= True, minValue= 1, value= 2)
+    cmds.setParent('..')
+    cmds.radioButtonGrp("YA_which", numberOfRadioButtons= 4, label= 'Type of Primitive', labelArray4= ['Sphere', 'Cube', 'Cylinder', 'Cone'], select= 1)  
+    cmds.checkBox("YA_negative", label='Make It Negative', value= False)
+    
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 100))
+    cmds.button(label = "Distribute", width = 300, command = 'create_LineY()')
+    #Z axis menu *** separated from menus with prefix "ZA_"
+    cmds.setParent('..')
+    cmds.setParent('..')
+    cmds.frameLayout(label= 'Distribute in Z Axis', borderVisible= True)
+    cmds.rowColumnLayout(numberOfColumns= 2)
+    cmds.text('Number of Primitives')
+    cmds.intSliderGrp("ZA_numsObjects", field= True, minValue= 1, value= 1)
+    cmds.text('Distance Between')
+    cmds.floatSliderGrp("ZA_distance", field= True, minValue= 1, value= 2)
+    cmds.setParent('..')
+    cmds.radioButtonGrp("ZA_which", numberOfRadioButtons= 4, label= 'Type of Primitive', labelArray4= ['Sphere', 'Cube', 'Cylinder', 'Cone'], select= 1)  
+    cmds.checkBox("ZA_negative", label='Make It Negative', value= False)
+    
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 100))
+    cmds.button(label = "Distribute", width = 300, command = 'create_LineZ()')
+    #circle menu *** separated from menus with prefix "CIR_"
+    cmds.setParent('..')
+    cmds.setParent('..')
+    cmds.frameLayout(label= 'Distribute in Circle', borderVisible= True)
+    cmds.rowColumnLayout(numberOfColumns= 2)
+    cmds.text('Number of Primitives')
+    cmds.intSliderGrp("CIR_numObjects", field= True, minValue= 1, value= 1)
+    cmds.text('Radius')
+    cmds.floatSliderGrp("CIR_radius", field= True, minValue= 1, value= 1)
+    cmds.setParent('..')
+    cmds.rowLayout()
+    cmds.radioButtonGrp("CIR_which", numberOfRadioButtons= 4, label= 'Type of Primitive', labelArray4= ['Sphere', 'Cube', 'Cylinder', 'Cone'], select= 1)
+    cmds.setParent('..')
+    
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 100))
+    cmds.button(label = "Distribute", width = 300, command = 'create_Circle()')
+    #Swirl menu *** separated from menus with prefix "SWR_"
+    cmds.setParent('..')
+    cmds.setParent('..')
+    cmds.frameLayout(label= 'Distribute in Swirl', borderVisible= True)
+    cmds.rowColumnLayout(numberOfColumns= 2)
+    cmds.text('Number of Primitives')
+    cmds.intSliderGrp("SWR_numObjects", field= True, minValue= 1, value= 10)
+    cmds.text('Number of Rotations')
+    cmds.intSliderGrp("SWR_rotations", field= True, minValue= 1, value= 4)
+    cmds.text('Distance Between Rotations')
+    cmds.floatSliderGrp("SWR_distance", field= True, minValue= 1, value= 1)
+    cmds.text('Offset')
+    cmds.floatSliderGrp("SWR_offset", field= True, minValue= 0, value= 0)
+    cmds.setParent('..')
+    cmds.radioButtonGrp("SWR_which", numberOfRadioButtons= 4, label= 'Type of Primitive', labelArray4= ['Sphere', 'Cube', 'Cylinder', 'Cone'], select= 1)
+    
+    cmds.columnLayout(columnAlign= "center", columnOffset= ("both", 100))
+    cmds.button(label = "Distribute", width = 300, command = 'create_Swirl()')
+    
+    cmds.showWindow(myWin)
+
+
+### defining commands 
+def create_Circle(): #to distribute primitives into a circle
+
+    # vairables from GUI options
+    num =  cmds.intSliderGrp("CIR_numObjects", query= True, value= True) #num of primitives
+    rad = cmds.floatSliderGrp("CIR_radius", query= True, value= True) # radius of circle
+    whichPrim = cmds.radioButtonGrp("CIR_which", query= True, select= True)# which primitive to use
+    
+    #math for circle, 6.28 == 2 pi
+    theta = 6.28/num
+    currentAngle = 0.0
+
+    for i in range(num): # for loop
+        currentAngle = theta * i #math with "i" to help offset per num 
+
+        if whichPrim == 1: #the ifs are the radio button options
+            cmds.polySphere()
+        elif whichPrim == 2:
+            cmds.polyCube()
+        elif whichPrim == 3:
+            cmds.polyCylinder()
+        elif whichPrim == 4:
+            cmds.polyCone()
+        else:
+            error("No object type selected.") # fool proof for no radio button selected
+
+	    #EQUATION: C = 2(pi) *r
+	    # 2(pi) is also 6.28 * the radius input
+	    # this requires sin in X, cos in Y will be substituted for Z to distribute on the grid
+        cmds.move(math.sin(currentAngle)*rad, 0, math.cos(currentAngle)*rad, absolute=True)
+       
+
+def create_Swirl(): #command for swirl
+    
+    num = cmds.intSliderGrp("SWR_numObjects", query= True, value= True) #number of points in one full rotation
+    rotation = cmds.intSliderGrp("SWR_rotations", query= True, value= True) # number of full rotations
+    distance = cmds.floatSliderGrp("SWR_distance", query= True, value= True)# distance between each rotation
+    offset = cmds.floatSliderGrp("SWR_offset", query= True, value= True) # offsetting start from origin, if 0 swir starts at origin
+    whichPrim = cmds.radioButtonGrp("SWR_which", query= True, select= True) # which primitive to use
+
+    theta = 6.28/ num
+    currentAngle = 0.0
+
+    for i in range(rotation * num + 1):## for loop two variable with 1 to offset it like in currentAngle using "i"
+    
+        currentAngle = theta * i # simple math for the circumference
+        r= offset +(distance * currentAngle) # math for the r in r = a + b(theta)
+
+        if whichPrim == 1: #the ifs are the radio button options
+            cmds.polySphere()
+        elif whichPrim == 2:
+            cmds.polyCube()
+        elif whichPrim == 3:
+            cmds.polyCylinder()
+        elif whichPrim == 4:
+            cmds.polyCone()
+        else:
+            error("No object type selected.") # fool proof for no radio button selected    
+    
+        ##  r = a + b(theta)  a is offset(optional) b is constant
+        # this requires sin in X, cos in Y will be substituted for Z to distribute on the grid
+        cmds.move(math.sin(currentAngle)* r, 0, math.cos(currentAngle)* r)
+  
+
+    
+def create_LineX(): ###defining X axis distribution command
+    
+    num = cmds.intSliderGrp("XA_numsObjects", query= True, value= True)#number of primitives
+    dis = cmds.floatSliderGrp("XA_distance", query= True, value= True)#length of radius
+    whichPrim = cmds.radioButtonGrp("XA_which", query= True, select= True)#type of primitive 
+    plusMinus = cmds.checkBox("XA_negative", query= True, value= True)#choice for neg or pos direction
+
+    currentLen = 0.0
+    
+    for i in range(num):# for loop 
+        currentLen = dis * i #math for distribution
+        
+        if plusMinus == False:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(currentLen, 0, 0) #math for positive on X axis
+        
+            
+        else:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(-currentLen, 0, 0) #math for negative on X axis  
+        
+              
+def create_LineY(): #defining Y axis distribution command
+
+    num = cmds.intSliderGrp("YA_numsObjects", query= True, value= True)#number of primitives
+    dis = cmds.floatSliderGrp("YA_distance", query= True, value= True)#length of radius
+    whichPrim = cmds.radioButtonGrp("YA_which", query= True, select= True)#type of primitive 
+    plusMinus = cmds.checkBox("YA_negative", query= True, value= True)#choice for neg or pos direction
+    
+    currentLen = 0.0
+    
+    for i in range(num):# for loop 
+        currentLen = dis * i #math for distribution
+        
+        if plusMinus == False:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(0, currentLen, 0) #math for positive on Y axis
+        
+            
+        else:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(0, -currentLen, 0) #math for negative on Y axis  
+
+def create_LineZ(): #defining Z axis distribution command
+
+    num = cmds.intSliderGrp("ZA_numsObjects", query= True, value= True)#number of primitives
+    dis = cmds.floatSliderGrp("ZA_distance", query= True, value= True)#length of radius
+    whichPrim = cmds.radioButtonGrp("ZA_which", query= True, select= True)#type of primitive 
+    plusMinus = cmds.checkBox("ZA_negative", query= True, value= True)#choice for neg or pos direction
+    
+    currentLen = 0.0
+    
+    for i in range(num):# for loop 
+        currentLen = dis * i #math for distribution
+        
+        if plusMinus == False:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(0, 0, currentLen) #math for positive on Z axis
+        
+            
+        else:
+            if whichPrim == 1: #the ifs are the radio button options
+                cmds.polySphere()
+            elif whichPrim == 2:
+                cmds.polyCube()
+            elif whichPrim == 3:
+                cmds.polyCylinder()
+            elif whichPrim == 4:
+                cmds.polyCone()
+            else:
+                cmds.error("No object type selected.") # fool proof for no radio button selected  
+     
+            cmds.move(0, 0, -currentLen) #math for negative on Z axis 
+
+Distrib_Tool_UI()#execute window to open

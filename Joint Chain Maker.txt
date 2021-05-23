@@ -1,0 +1,70 @@
+import maya.cmds as cmds
+import math
+
+###########################################
+#                   UI                    #   
+###########################################
+
+def Joint_Chain_Gen_GUI(): 
+    myWin= cmds.window(title= 'Joint Chain Maker', width= 450)
+    cmds.columnLayout()
+    cmds.text(label= 'Number of Chains')# an option if the user wants to make multiple chains
+    cmds.intField("Chain", minValue= 1, value= 1)
+    cmds.text(label= 'Number of Joints in Chain') # an option for how many joints the user desires for the chains
+    cmds.intField("Joint", minValue= 1, value= 1)
+    cmds.text(label = 'Length of Chain') # an option if user wants to have the chain longer or shorter 
+    cmds.floatSliderGrp("Length", field= True, minValue = 1, value = 1)
+    cmds.text(label= 'Radius of Distribution') # optional button to distribute the chains in a circle evenly
+    cmds.floatSliderGrp("Radius", field= True, minValue= 0, value= 1)
+    cmds.button(label= 'Make Chain', width= 200, command= "Create_Chain()")
+    cmds.showWindow(myWin)
+
+###########################################
+#                 METHOD                  #   
+###########################################
+    
+def Create_Chain(): #This is to create chain(s) of joints from one selected joint
+    #defining variables
+    numChain= cmds.intField("Chain", query= True, value= True)
+    numJoint= cmds.intField("Joint", query= True, value= True)
+    length= cmds.floatSliderGrp("Length", query = True, value = True)
+    radius= cmds.floatSliderGrp("Radius", query= True, value= True)
+    
+    sel= cmds.ls(sl= True, type= 'joint') #to get the current selection on type of joint
+    if not sel:
+        print 'No joint was selected! You need to select a joint to start!'
+        return
+        
+    #inputs for the distribution equations   
+    angle = 6.28/numChain
+    rotationAngle = 360/numChain
+
+    currentAngle = 0.0             
+    baseJoint= sel[0]# this is the main joint to expand with when creating a chain
+
+    ### This is to have the coordinates of the baseJoint if joint isn't at (0,0,0)
+    startingPosition = cmds.getAttr('{}.translate'.format(baseJoint))[0] 
+    startTX, startTY, startTZ = startingPosition #new variable for baseJoint coordinates
+
+    #distribute function with chain, joint, and length apart of equation 
+    rotateJointValue = -90 
+    for i in range(numChain): #math for inputing numChain variable into a currentAngle variable
+        currentAngle = angle * i  
+        print i, currentAngle, rotationAngle  
+        cmds.select(clear = 1) #to ensure the next command is only for the first joint in chain
+    
+        for s in range(numJoint): #this is the group for creating a joint and chain 
+            myJnt = cmds.joint(name = 'Joint_chain{}_joint{}'.format(i+1, s+1), relative = True, position =(length, 0, 0))
+        ### after this, we move the top joints of each chain
+        
+            if s == 0: #if statement for the first joint in the chain
+                cmds.move(startTX+ math.sin(currentAngle), startTY, startTZ + math.cos(currentAngle), absolute=True) #The equation to make the joints go in a circle
+                cmds.setAttr('{}.rotateY'.format(myJnt), rotateJointValue)
+            
+        rotateJointValue = rotateJointValue + rotationAngle 
+        
+        cmds.parent('Joint_chain{}_joint1'.format(i+1), sel[0])#This will parent the first joint of each change under the original first joint
+        
+
+      
+Joint_Chain_Gen_GUI()

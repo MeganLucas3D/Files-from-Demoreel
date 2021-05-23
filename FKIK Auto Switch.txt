@@ -1,0 +1,389 @@
+import maya.cmds as cmds
+import math
+
+#
+# Ensure the joints follow in this naiming convention IK/FK/bnd_jnt_L/R_objectName
+# This script will create a switch CTRL and connection on both sides of the skeelton
+#
+
+def create_FKIKswitch_UI():
+    myWindow = cmds.window(title= 'FK/IK Auto Switch')
+    cmds.columnLayout(columnAttach=('both', 5), rowSpacing= 7, columnWidth= 400)
+    cmds.button(label= 'Create Joints', height= 30, command= "JOINTS()") #the switch command
+    #variable for choosing which area the swtich will be created with correct naming convention on selected joints
+    cmds.text(label= 'Area For Swtich', height= 40, align= "center", backgroundColor= (0.225,0.225,0.225), font= 'boldLabelFont')
+    cmds.radioButtonGrp("Which01", label= 'choose one:', numberOfRadioButtons= 2, labelArray2= ["Arm", "Leg"], select= 1)
+    #variable for choosing which size the switch will be created with correct naming convetion on selected joints
+    cmds.button(label= 'Create Swtich', height= 30, command= "FKIK_Switch()") #the skeleton command 
+    cmds.button(label= 'Close Window', height= 30, command=('cmds.deleteUI(\"' + myWindow + '\", window=True)')) #command to close the GUI
+    cmds.showWindow(myWindow)
+    
+def JOINTS():
+    '''creating a skeleton'''
+    #spine joints
+    cmds.joint(name= "jnt_root", p= (0,22,0), radius= 0.5)#creating the chain
+    cmds.joint(name= "jnt_spine1", p= (0,24,0), radius= 0.5)
+    cmds.joint(name= "jnt_spine2", p= (0,28,0), radius= 0.5)
+    cmds.joint(name= "jnt_spine3", p= (0,32,0), radius= 0.5)
+    cmds.joint(name= "jnt_spine4", p=  (0,35,0), radius= 0.5) 
+    cmds.joint(name= "jnt_neck", p=  (0,38,0), radius= 0.5)
+    cmds.joint(name= "jnt_head", p=  (0,42,0), radius= 0.5)
+    cmds.joint(name= "jnt_TOH", p=  (0,45,0), radius= 0.5)
+    cmds.select("jnt_root")
+    cmds.joint(e= True, oj= 'xyz', sao= 'zup', ch= True, zso= True) #editing joint orientation  
+    cmds.select("jnt_TOH")
+    cmds.joint(e= True, oj= 'none', ch= True, zso= True) #editing joint orientation  
+    
+    #head joints
+    cmds.select("jnt_head")
+    cmds.joint(name= "jnt_jaw", p= (0,41,0.5), radius= 0.5) 
+    cmds.joint(name= "jnt_chin", p= (0,40,2), radius= 0.5)
+    cmds.select("jnt_jaw")
+    cmds.joint(e= True, oj= 'xzy', sao= 'yup', zso= True) #editing joint orientation 
+    cmds.select("jnt_chin")
+    cmds.joint(e= True, oj= 'none', ch= True, zso= True) #editing joint orientation 
+    cmds.select(cl= True)#deselect
+    
+    cmds.joint(name= "jnt_L_eye", p= (1,42,2), radius= 0.5) #single joint to keep in MAYA world orientation
+    cmds.parent("jnt_L_eye", "jnt_head")#parent joint to the intended joint after creation
+    cmds.select("jnt_L_eye")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))#mirror joint
+    
+    
+    #arm joints
+    cmds.select("jnt_spine4")#selecting the base joint for chain
+    cmds.joint(name= "bnd_jnt_L_shoulder", p= (3,36.5,0), radius= 0.5)#creating the chain
+    cmds.joint(name= "bnd_jnt_L_elbow", p= (8,36.5,-1), radius= 0.5)
+    cmds.joint(name= "bnd_jnt_L_wrist", p= (14,36.5,0), radius= 0.5)
+    cmds.joint(name= "jnt_L_hand", p= (15,36.5,0), radius= 0.5)
+    
+    cmds.select("bnd_jnt_L_shoulder")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    
+    
+    #hand joints
+    cmds.select(cl= True)#deselect
+    cmds.joint(name= "jnt_L_index1", p= (17,36.5,1.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_index2", p= (18,36.5,1.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_index3", p= (19,36.5,1.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_index4", p= (20,36.5,1.2), radius= 0.5)
+    cmds.select(cl= True)#deselect
+    cmds.joint(name= "jnt_L_middle1", p= (17.5,36.5,0.5), radius= 0.5)
+    cmds.joint(name= "jnt_L_middle2", p= (18.5,36.5,0.5), radius= 0.5)
+    cmds.joint(name= "jnt_L_middle3", p= (19.5,36.5,0.5), radius= 0.5)
+    cmds.joint(name= "jnt_L_middle4", p= (20.5,36.5,0.5), radius= 0.5)
+    cmds.select(cl= True)#deselect
+    cmds.joint(name= "jnt_L_ring1", p= (17.2,36.5,-0.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_ring2", p= (18.2,36.5,-0.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_ring3", p= (19.2,36.5,-0.2), radius= 0.5)
+    cmds.joint(name= "jnt_L_ring4", p= (20.2,36.5,-0.2), radius= 0.5)
+    cmds.select(cl= True)#deselect
+    cmds.joint(name= "jnt_L_pinky1", p= (16.5,36.5,-0.9), radius= 0.5)
+    cmds.joint(name= "jnt_L_pinky2", p= (17.5,36.5,-0.9), radius= 0.5)
+    cmds.joint(name= "jnt_L_pinky3", p= (18.5,36.5,-0.9), radius= 0.5)
+    cmds.joint(name= "jnt_L_pinky4", p= (19.5,36.5,-0.9), radius= 0.5)
+    cmds.select(cl= True)#deselect
+    cmds.joint(name= "jnt_L_thumb1", p= (15.5,36.5,2), radius= 0.5)
+    cmds.joint(name= "jnt_L_thumb2", p= (16.5,36.5,2), radius= 0.5)
+    cmds.joint(name= "jnt_L_thumb3", p= (17.5,36.5,2), radius= 0.5)
+    cmds.joint(name= "jnt_L_thumb4", p= (18.5,36.5,2), radius= 0.5)
+    
+    cmds.parent("jnt_L_index1", "jnt_L_hand")#connecting fingers to hand
+    cmds.parent("jnt_L_middle1", "jnt_L_hand")
+    cmds.parent("jnt_L_ring1", "jnt_L_hand")
+    cmds.parent("jnt_L_pinky1", "jnt_L_hand")
+    cmds.parent("jnt_L_thumb1", "jnt_L_hand")
+    
+    #orientation of the fingers
+    cmds.select("jnt_L_index1")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("jnt_L_index4")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    
+    cmds.select("jnt_L_middle1")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("jnt_L_middle4")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    
+    cmds.select("jnt_L_ring1")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("jnt_L_ring4")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    
+    cmds.select("jnt_L_pinky1")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("jnt_L_pinky4")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    
+    cmds.select("jnt_L_thumb1")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("jnt_L_thumb4")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    
+    #FK
+    cmds.select("bnd_jnt_L_shoulder")
+    cmds.joint(name= "FK_jnt_L_shoulder", p= (3,36.5,0), radius= 0.5)   
+    cmds.joint(name= "FK_jnt_L_elbow", p= (8,36.5,-1), radius= 0.5)
+    cmds.joint(name= "FK_jnt_L_wrist", p= (14,36.5,0), radius= 0.5)
+    cmds.select("FK_jnt_L_shoulder")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("FK_jnt_L_wrist")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    cmds.parent("FK_jnt_L_shoulder", "jnt_spine4")# follows same orient andn measurements of bndjnt but are each separate chains
+    
+    #IK
+    cmds.select("bnd_jnt_L_shoulder")
+    cmds.joint(name= "IK_jnt_L_shoulder", p= (3,36.5,0), radius= 0.5)   
+    cmds.joint(name= "IK_jnt_L_elbow", p= (8,36.5,-1), radius= 0.5)
+    cmds.joint(name= "IK_jnt_L_wrist", p= (14,36.5,0), radius= 0.5)
+    cmds.select("IK_jnt_L_shoulder")#orientation of joints
+    cmds.joint(e= True, oj= "xyz", sao= "yup", ch= True, zso= True)
+    cmds.select("IK_jnt_L_wrist")#orientation of joints
+    cmds.joint(e= True, oj= "none", ch= True, zso= True)
+    cmds.parent("IK_jnt_L_shoulder", "jnt_spine4")# follows same orient andn measurements of bndjnt but are each separate chains
+    
+    #mirroring the jpoi
+    cmds.select("bnd_jnt_L_shoulder")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+    cmds.select("FK_jnt_L_shoulder")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+    cmds.select("IK_jnt_L_shoulder")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+    
+    #leg joints
+    #L side
+    cmds.select("jnt_root")
+    cmds.joint(name= "bnd_jnt_L_hip", p= (2,24,0), radius= 0.5)
+    cmds.joint(name= "bnd_jnt_L_knee", p= (2,12,1), radius= 0.5)
+    cmds.joint(name= "bnd_jnt_L_ankle", p= (2,1.5,0), radius= 0.5)
+    cmds.joint(name= "jnt_L_ball", p= (2,0,2), radius= 0.5)
+    cmds.joint(name= "jnt_L_toe", p= (2,0,6), radius= 0.5)
+    
+    cmds.select("bnd_jnt_L_hip")
+    cmds.joint(e= True, oj= 'xyz', sao= 'zdown', ch= True, zso= True) #editing joint orientation  
+    cmds.select("jnt_L_toe")
+    cmds.joint(e= True, oj= 'none', ch= True, zso= True) #editing joint orientation  
+    
+    
+    #FK
+    cmds.select("bnd_jnt_L_hip")
+    cmds.joint(name= "FK_jnt_L_hip", p= (2,24,0), radius= 0.5)
+    cmds.joint(name= "FK_jnt_L_knee", p= (2,12,1), radius= 0.5)
+    cmds.joint(name= "FK_jnt_L_ankle", p= (2,1.5,0), radius= 0.5)
+    cmds.select("bnd_jnt_L_hip")
+    cmds.select("FK_jnt_L_hip")#selectingn for orientation
+    cmds.joint(e= True, oj= 'xyz', sao= 'zdown', ch= True, zso= True) #editing joint orientation  
+    cmds.select("FK_jnt_L_ankle")
+    cmds.joint(e= True, oj= 'none', ch= True, zso= True) #editing joint orientation
+    cmds.parent("FK_jnt_L_hip", "jnt_root")# follows same orient andn measurements of bndjnt but are each separate chains
+    
+    #IK
+    cmds.select("bnd_jnt_L_hip")
+    cmds.joint(name= "IK_jnt_L_hip", p= (2,24,0), radius= 0.5)
+    cmds.joint(name= "IK_jnt_L_knee", p= (2,12,1), radius= 0.5)
+    cmds.joint(name= "IK_jnt_L_ankle", p= (2,1.5,0), radius= 0.5)
+    cmds.select("IK_jnt_L_hip")#selectingn for orientation
+    cmds.joint(e= True, oj= 'xyz', sao= 'zdown', ch= True, zso= True) #editing joint orientation  
+    cmds.select("IK_jnt_L_ankle")
+    cmds.joint(e= True, oj= 'none', ch= True, zso= True) #editing joint orientation
+    cmds.parent("IK_jnt_L_hip", "jnt_root")# follows same orient andn measurements of bndjnt but are each separate chains
+    
+    
+    
+    cmds.select("bnd_jnt_L_hip")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+    cmds.select("FK_jnt_L_hip")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+    cmds.select("IK_jnt_L_hip")
+    cmds.mirrorJoint( mirrorYZ= True, mirrorBehavior= True, searchReplace= ('L','R'))
+
+
+def FKIK_Switch(): #defining the function
+    area= cmds.radioButtonGrp("Which01", query= True, select= True)
+    
+    #variable for object naming
+    a1= 'arm'
+    a2= 'leg'
+    sec1= 'wrist'
+    sec3= 'elbow'
+    sec5= 'shoulder'
+    sec2= 'ankle'
+    sec4= 'knee'
+    sec6= 'hip'
+    
+    #for loop will esure that L and R will be separate when creating the ctrls and swtich connections with correct naming  convention
+    for side in 'LR':    
+        print 'Working on side', side
+        
+        if area == 1:
+            print 'Creating Arm Swtich'
+            cmds.circle()
+            cmds.rotate(90, 0, 0, relative= True)
+            cmds.curve(degree= 1, point=[(0, 0, 1), (0, 0, 3)], ws= True)
+            cmds.select('nurbsCircle{}'.format(1), 'curve{}'.format(1))
+            cmds.delete(constructionHistory= True)#delete history on curves
+            cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0)#freeze transformations on curves
+            cmds.group(name= 'IKFK_Switch')#grouping the curves               
+            cmds.select('nurbsCircleShape{}'.format(1), 'curveShape{}'.format(1), 'IKFK_Switch')
+            cmds.parent( relative= True, shape= True)#reparent shape nodes into the new group to make into 1 object
+            cmds.delete('nurbsCircle{}'.format(1), 'curve{}'.format(1))#delete the old group nodes from the shapes. 
+            #script for renaming to specfic CTRL switch
+            cmds.select('IKFK_Switch')
+            cmds.rename('IKFK_Switch_{}_{}'.format(side, a1))
+            cmds.select('nurbsCircleShape{}'.format(1))
+            cmds.rename('nurbsCircle_{}_{}'.format(side, a1))
+            cmds.select('curveShape{}'.format(1))
+            cmds.rename('curve_{}_{}'.format(side, a1))
+            #command to make the ctrl to on the wrist joint
+            cmds.pointConstraint('bnd_jnt_{}_{}'.format(side, sec1), 'IKFK_Switch_{}_{}'.format(side, a1)) #command to get CTRL onto the end joint
+            cmds.delete('IKFK_Switch_{}_{}_pointConstraint{}'.format(side, a1, 0+1))
+            cmds.setAttr('IKFK_Switch_{}_{}.tz'.format(side, a1), -4) #moving CTRL to be outside of end joint
+            cmds.parentConstraint('bnd_jnt_{}_{}'.format(side, sec1), 'IKFK_Switch_{}_{}'.format(side, a1), weight= 1, mo= True)#parent C ctrl to the end joint
+            cmds.select('IKFK_Switch_{}_{}'.format(side, a1))
+            #only have 1 attribute, the FKIK switch which will be the port to connect the FKIK blending script
+            cmds.addAttr(longName= 'IKFK_Switch', keyable= True, attributeType= "double", defaultValue= 0, minValue= 0, maxValue= 1)
+            #lock and hide all values
+            cmds.setAttr('IKFK_Switch_{}_{}.tx'.format(side, a1), lock= True, keyable= False, channelBox= False) 
+            cmds.setAttr('IKFK_Switch_{}_{}.ty'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.tz'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.rx'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.ry'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.rz'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sx'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sy'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sz'.format(side, a1), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.v'.format(side, a1), lock= True, keyable= False, channelBox= False)    
+            #This script creates the CTRL, setup the Attributes, and connects blendnodes together    
+        
+            ##Creating nodes TRANSLATION only
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec5))
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec3))
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec1))
+            ###>FK is color 1, IK is color 2 always
+            #for L shoulder
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec5), 'blendColors_translate_{}_{}.color1'.format(side, sec5), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec5), 'blendColors_translate_{}_{}.color2'.format(side, sec5), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec5), 'bnd_jnt_{}_{}.translate'.format(side, sec5), force= True)
+            #for L elbow
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec3), 'blendColors_translate_{}_{}.color1'.format(side, sec3), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec3), 'blendColors_translate_{}_{}.color2'.format(side, sec3), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec3), 'bnd_jnt_{}_{}.translate'.format(side, sec3), force= True)
+            #for L wrist
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec1), 'blendColors_translate_{}_{}.color1'.format(side, sec1), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec1), 'blendColors_translate_{}_{}.color2'.format(side, sec1), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec1), 'bnd_jnt_{}_{}.translate'.format(side, sec1), force= True)
+                
+            ##Creating nodes ROTATION only
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec5))
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec3))
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec1))
+            ###>FK is color 1, IK is color 2 always
+            #for L shoulder
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec5), 'blendColors_rotate_{}_{}.color1'.format(side, sec5), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec5), 'blendColors_rotate_{}_{}.color2'.format(side, sec5), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec5), 'bnd_jnt_{}_{}.rotate'.format(side, sec5), force= True)
+            #for L elbow
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec3), 'blendColors_rotate_{}_{}.color1'.format(side, sec3), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec3), 'blendColors_rotate_{}_{}.color2'.format(side, sec3), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec3), 'bnd_jnt_{}_{}.rotate'.format(side, sec3), force= True)
+            #for L wrist
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec1), 'blendColors_rotate_{}_{}.color1'.format(side, sec1), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec1), 'blendColors_rotate_{}_{}.color2'.format(side, sec1), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec1), 'bnd_jnt_{}_{}.rotate'.format(side, sec1), force= True)
+       
+            ####> Connection of the blends in the FKIK_Switch CTRL
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_translate_{}_{}.blender".format(side, sec5))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_rotate_{}_{}.blender".format(side, sec5))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_translate_{}_{}.blender".format(side, sec3))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_rotate_{}_{}.blender".format(side, sec3))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_translate_{}_{}.blender".format(side, sec1))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a1), "blendColors_rotate_{}_{}.blender".format(side, sec1))
+    
+        if area == 2:
+            print 'Creating Leg Swtich'
+            cmds.circle()
+            cmds.rotate(90, 0, 0, relative= True)
+            cmds.curve(degree= 1, point=[(0, 0, 1), (0, 0, 3)], ws= True)
+            cmds.select('nurbsCircle{}'.format(1), 'curve{}'.format(1))
+            cmds.delete(constructionHistory= True)#delete history on curves
+            cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0)#freeze transformations on curves
+            cmds.group(name= 'IKFK_Switch')#grouping the curves               
+            cmds.select('nurbsCircleShape{}'.format(1), 'curveShape{}'.format(1), 'IKFK_Switch')
+            cmds.parent( relative= True, shape= True)#reparent shape nodes into the new group to make into 1 object
+            cmds.delete('nurbsCircle{}'.format(1), 'curve{}'.format(1))#delete the old group nodes from the shapes. 
+            #script for renaming to specfic CTRL switch
+            cmds.select('IKFK_Switch')
+            cmds.rename('IKFK_Switch_{}_{}'.format(side, a2))
+            cmds.select('nurbsCircleShape{}'.format(1))
+            cmds.rename('nurbsCircle_{}_{}'.format(side, a2))
+            cmds.select('curveShape{}'.format(1))
+            cmds.rename('curve_{}_{}'.format(side, a2))
+            #command to make the ctrl to on the wrist joint
+            cmds.pointConstraint('bnd_jnt_{}_{}'.format(side, sec2), 'IKFK_Switch_{}_{}'.format(side, a2)) #command to get CTRL onto the end joint
+            cmds.delete('IKFK_Switch_{}_{}_pointConstraint{}'.format(side, a2, 0+1))
+            cmds.setAttr('IKFK_Switch_{}_{}.tz'.format(side, a2), -4) #moving CTRL to be outside of end joint
+            cmds.parentConstraint('bnd_jnt_{}_{}'.format(side, sec2), 'IKFK_Switch_{}_{}'.format(side, a2), weight= 1, mo= True)#parent C ctrl to the end joint
+            cmds.select('IKFK_Switch_{}_{}'.format(side, a2))
+            #only have 1 attribute, the FKIK switch which will be the port to connect the FKIK blending script
+            cmds.addAttr(longName= 'IKFK_Switch', keyable= True, attributeType= "double", defaultValue= 0, minValue= 0, maxValue= 1)
+            #lock and hide all values
+            cmds.setAttr('IKFK_Switch_{}_{}.tx'.format(side, a2), lock= True, keyable= False, channelBox= False) 
+            cmds.setAttr('IKFK_Switch_{}_{}.ty'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.tz'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.rx'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.ry'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.rz'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sx'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sy'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.sz'.format(side, a2), lock= True, keyable= False, channelBox= False)
+            cmds.setAttr('IKFK_Switch_{}_{}.v'.format(side, a2), lock= True, keyable= False, channelBox= False)    
+            #This script creates the CTRL, setup the Attributes, and connects blendnodes together    
+        
+            ##Creating nodes TRANSLATION only
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec6))
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec4))
+            cmds.createNode('blendColors', name= 'blendColors_translate_{}_{}'.format(side, sec2))
+            ###>FK is color 1, IK is color 2 always
+            #for L hip
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec6), 'blendColors_translate_{}_{}.color1'.format(side, sec6), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec6), 'blendColors_translate_{}_{}.color2'.format(side, sec6), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec6), 'bnd_jnt_{}_{}.translate'.format(side, sec6), force= True)
+            #for L knee
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec4), 'blendColors_translate_{}_{}.color1'.format(side, sec4), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec4), 'blendColors_translate_{}_{}.color2'.format(side, sec4), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec4), 'bnd_jnt_{}_{}.translate'.format(side, sec4), force= True)
+            #for L ankle
+            cmds.connectAttr('FK_jnt_{}_{}.translate'.format(side, sec2), 'blendColors_translate_{}_{}.color1'.format(side, sec2), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.translate'.format(side, sec2), 'blendColors_translate_{}_{}.color2'.format(side, sec2), force= True)
+            cmds.connectAttr('blendColors_translate_{}_{}.output'.format(side, sec2), 'bnd_jnt_{}_{}.translate'.format(side, sec2), force= True)
+                
+                
+            ##Creating nodes ROTATION only
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec6))
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec4))
+            cmds.createNode('blendColors', name= 'blendColors_rotate_{}_{}'.format(side, sec2))
+            ###>FK is color 1, IK is color 2 always
+            #for L hip
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec6), 'blendColors_rotate_{}_{}.color1'.format(side, sec6), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec6), 'blendColors_rotate_{}_{}.color2'.format(side, sec6), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec6), 'bnd_jnt_{}_{}.rotate'.format(side, sec6), force= True)
+            #for L knee
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec4), 'blendColors_rotate_{}_{}.color1'.format(side, sec4), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec4), 'blendColors_rotate_{}_{}.color2'.format(side, sec4), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec4), 'bnd_jnt_{}_{}.rotate'.format(side, sec4), force= True)
+            #for L ankle
+            cmds.connectAttr('FK_jnt_{}_{}.rotate'.format(side, sec2), 'blendColors_rotate_{}_{}.color1'.format(side, sec2), force= True)
+            cmds.connectAttr('IK_jnt_{}_{}.rotate'.format(side, sec2), 'blendColors_rotate_{}_{}.color2'.format(side, sec2), force= True)
+            cmds.connectAttr('blendColors_rotate_{}_{}.output'.format(side, sec2), 'bnd_jnt_{}_{}.rotate'.format(side, sec2), force= True)
+                
+                
+            ####> Connection of the blends in the FKIK_Switch CTRL
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_translate_{}_{}.blender".format(side, sec6))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_rotate_{}_{}.blender".format(side, sec6))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_translate_{}_{}.blender".format(side, sec4))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_rotate_{}_{}.blender".format(side, sec4))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_translate_{}_{}.blender".format(side, sec2))
+            cmds.connectAttr("IKFK_Switch_{}_{}.IKFK_Switch".format(side, a2), "blendColors_rotate_{}_{}.blender".format(side, sec2))
+            
+
+create_FKIKswitch_UI()

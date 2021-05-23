@@ -1,0 +1,67 @@
+import maya.cmds as cmds
+import math
+
+###########################################
+#                   UI                    #   
+###########################################
+
+def TurntableUI():
+    TTwindow= cmds.window(title= 'Create Turntable', width= 330, height= 250)
+    cmds.columnLayout()
+    cmds.text(label= 'Length of Animation', height= 30, font= 'boldLabelFont')
+    #first Variable
+    cmds.text(label= 'Start Time:')
+    cmds.intField("sTime", minValue= 0, value= 1)
+    #Second variable
+    cmds.text(label= 'End Time:')
+    cmds.intField("eTime", minValue= 1, value= 10)
+    #Third variable
+    cmds.text(label= 'Number of Rotations', height= 30, font= 'boldLabelFont')
+    cmds.intSliderGrp("Rotations", field= True, minValue= 1, value= 1, sliderStep= 1)
+    #Fourth variable
+    cmds.text(label= 'Direction of Turntable', height= 30, font= 'boldLabelFont')
+    cmds.radioButtonGrp("Which", numberOfRadioButtons= 2, labelArray2=['Clockwise', 'Counter Clockwise'], select=1)
+    cmds.button(label= 'Create', width= 250, command= 'TurnTable_CMD()')
+    cmds.showWindow(TTwindow)
+
+
+###########################################
+#                 METHOD                  #   
+###########################################
+
+def TurnTable_CMD():   
+    selObj= cmds.ls(sl= True)[0]
+    if not selObj:
+        print 'no object selected to create turntable, please select an object to continue!'
+
+    start= cmds.intField("sTime", query= True, value= True)
+    end= cmds.intField("eTime", query= True, value= True)
+    numRotation= cmds.intSliderGrp("Rotations", query= True, value= True)
+    direction= cmds.radioButtonGrp("Which", query= True, select= True) 
+   
+    if direction == 1:
+        POSincrements = numRotation*360 
+        
+        cmds.currentTime(start, edit= True)
+        cmds.setAttr(selObj +".rotateY", 0)
+        cmds.setKeyframe(attribute = 'rotateY') 
+    
+        cmds.currentTime(end, edit= True)
+        cmds.setAttr(selObj +".rotateY", POSincrements)
+        cmds.setKeyframe(attribute = 'rotateY') 
+                              
+    elif direction == 2:
+        NEGincrements = numRotation*-360  
+                               
+        cmds.currentTime(start, edit= True)
+        cmds.setAttr(selObj +".rotateY", 0)
+        cmds.setKeyframe(attribute = 'rotateY') 
+    
+        cmds.currentTime(end, edit= True)
+        cmds.setAttr(selObj +".rotateY", NEGincrements)
+        cmds.setKeyframe(attribute = 'rotateY')
+        
+    else:
+        print 'No rotation direction selected! Please select one!'
+
+TurntableUI()
